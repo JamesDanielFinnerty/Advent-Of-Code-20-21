@@ -59,7 +59,7 @@ namespace AdventOfCode
 
         public static long Part2(string[] lines)
         {
-            // Use Spare List for memory locations
+            // Use Sparse List for memory locations
             var memory = new List<Tuple<long, long>>();
 
             string currentMask = "";
@@ -72,7 +72,7 @@ namespace AdventOfCode
                 if (command == "mas")
                 {
                     // if instruction is a new mask, parse mask from line then set.
-                    currentMask = line.Split('=')[1].TrimStart();
+                    currentMask = ParseMaskFromLine(line);
                 }
                 else if (command == "mem")
                 {
@@ -103,12 +103,13 @@ namespace AdventOfCode
 
                     string complete = output.ToString();
 
-                    // count X in result. This tells us how many wildcard address bits
+                    // count X's in result. This tells us how many wildcard address bits
                     // there are. Squaring this value, gives us the number of mem
-                    // locastions we end up writing too.
+                    // locastions we will end up writing too.
                     int max = complete.Count(x => x == 'X');
                     max = max * max;
 
+                    // create locations working list and seed with initial mask
                     var locations = new List<String>();
                     locations.Add(complete);
 
@@ -118,26 +119,32 @@ namespace AdventOfCode
                     while (true)
                     {
                         for (int i = 0; i < 36; i++)
+                        // for each bit in our address
                         {
                             string loc = locations[count];
                             if (loc[i] == 'X')
+                            // where the bit is a wildcard X
                             {
-                                // generate and add child floating addresses
+                                // generate and add 2 child floating addresses replacing X for 1 and 0
                                 locations.Add(loc.Substring(0, i) + "1" + loc.Substring(i + 1));
                                 locations.Add(loc.Substring(0, i) + "0" + loc.Substring(i + 1));
 
-                                // remove parent address from list and decrement 
-                                // count to reflect this change
+                                // remove parent address from list and 
+                                // decrement count to reflect this removal
                                 locations.Remove(loc);
                                 count--;
 
-                                // break out of the current foating address as we only
-                                // wish to substitude one X per iteration
+                                // break out of the current floating address as we only
+                                // wish to substitute one X per iteration
                                 break;
                             }
 
                         }
+
+                        // increment count
                         count++;
+
+                        // if count is now at the max address, break
                         if (count == max - 1) { break; }
                     }
 
@@ -145,7 +152,7 @@ namespace AdventOfCode
                     {
                         long workingLocation = Convert.ToInt64(location, 2);
 
-                        // if location is already set, then remove
+                        // if location is already set, then remove it so we replace below
                         memory.RemoveAll(x => x.Item1 == workingLocation);
 
                         // store val for location
