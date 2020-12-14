@@ -9,8 +9,10 @@ namespace AdventOfCode
     {
         public static long Part1(string[] lines)
         {
-
             string currentMask = "";
+
+            // Create array emulating memory. Dirty but initialised to 100,000
+            // as this is larger than any location in the given data set
             var memory = new Int64[100000];
 
             foreach (var line in lines)
@@ -26,9 +28,7 @@ namespace AdventOfCode
                     int memLocation = int.Parse(line.Split('=')[0].TrimEnd().Replace("]", string.Empty).Substring(4));
                     int memValue = int.Parse(line.Split('=')[1].TrimStart());
 
-                    string binaryValue = "000000000000000000000000000000000000" + Convert.ToString(memValue, 2);
-                    int len = binaryValue.Length - 36;
-                    binaryValue = binaryValue.Substring(len);
+                    string binaryValue = ConvertToBinary(memValue);
 
                     StringBuilder output = new StringBuilder();
 
@@ -50,18 +50,15 @@ namespace AdventOfCode
                 }
             }
 
-            Int64 final = 0;
-
-            foreach (var loc in memory)
-            {
-                final += loc;
-            }
-
-            return final;
+            // sum mem locations to get solution
+            return memory.Sum();
         }
 
         public static long Part2(string[] lines)
         {
+            // Better that part 1s hacky memory array. Implemented
+            // sparse Tuple to model memory has was hitting 2GB limit with
+            // giant arrays needed for addresses in this part.
             var memory = new List<Tuple<long, long>>();
 
             string currentMask = "";
@@ -70,7 +67,7 @@ namespace AdventOfCode
             {
                 if (line.Substring(0, 3) == "mas")
                 {
-                    // set current mask
+                    // if instruction is a new mask, parse mask from line then set.
                     currentMask = line.Split('=')[1].TrimStart();
                 }
                 else if (line.Substring(0, 3) == "mem")
@@ -79,14 +76,7 @@ namespace AdventOfCode
                     int memLocation = int.Parse(line.Split('=')[0].TrimEnd().Replace("]", string.Empty).Substring(4));
                     int memValue = int.Parse(line.Split('=')[1].TrimStart());
 
-                    // add leading 36 zeros to fill out to 36 bits
-                    string binaryValue = "000000000000000000000000000000000000" + Convert.ToString(memLocation, 2);
-
-                    // calc how many surplus zeros
-                    int len = binaryValue.Length - 36;
-
-                    // trim leading surplus
-                    binaryValue = binaryValue.Substring(len);
+                    string binaryValue = ConvertToBinary(memLocation);
 
                     StringBuilder output = new StringBuilder();
 
@@ -110,6 +100,7 @@ namespace AdventOfCode
                     string complete = output.ToString();
                     int max = complete.Count(x => x == 'X');
                     max = max * max;
+
                     var locations = new List<String>();
                     locations.Add(complete);
 
@@ -160,14 +151,20 @@ namespace AdventOfCode
                 }
             }
 
-            Int64 final = 0;
+            // sum mem vals to get solution
+            return memory.Sum(x => x.Item2);
+        }
 
-            foreach (var loc in memory)
-            {
-                final += loc.Item2;
-            }
+        private static string ConvertToBinary(int inputNumber)
+        {
+            // convert input to binary then add leading 36 zeros to fill out to 36+ bits
+            string binaryValue = "000000000000000000000000000000000000" + Convert.ToString(inputNumber, 2);
 
-            return final;
+            // calc how many surplus zeros
+            int len = binaryValue.Length - 36;
+
+            // trim leading surplus then return
+            return binaryValue.Substring(len);
         }
     }
 }
