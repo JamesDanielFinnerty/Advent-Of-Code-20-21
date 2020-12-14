@@ -17,16 +17,19 @@ namespace AdventOfCode
 
             foreach (var line in lines)
             {
-                if (line.Substring(0, 3) == "mas")
+                // first three chars of line signify instruction type
+                string command = line.Substring(0, 3);
+
+                if (command == "mas")
                 {
-                    // set current mask
-                    currentMask = line.Split('=')[1].TrimStart();
+                    // if mask, set current mask
+                    currentMask = ParseMaskFromLine(line);
                 }
-                else if (line.Substring(0, 3) == "mem")
+                else if (command == "mem")
                 {
-                    // parse out values
-                    int memLocation = int.Parse(line.Split('=')[0].TrimEnd().Replace("]", string.Empty).Substring(4));
-                    int memValue = int.Parse(line.Split('=')[1].TrimStart());
+                    // if mem, parse out values
+                    int memLocation = ParseMemoryLocationFromLine(line);
+                    int memValue = ParseMemoryValueFromLine(line);
 
                     string binaryValue = ConvertToBinary(memValue);
 
@@ -44,9 +47,7 @@ namespace AdventOfCode
                         }
                     }
 
-                    string complete = output.ToString();
-                    memory[memLocation] = Convert.ToInt64(complete, 2);
-
+                    memory[memLocation] = Convert.ToInt64(output.ToString(), 2);
                 }
             }
 
@@ -54,27 +55,30 @@ namespace AdventOfCode
             return memory.Sum();
         }
 
+        
+
         public static long Part2(string[] lines)
         {
-            // Better that part 1s hacky memory array. Implemented
-            // sparse Tuple to model memory has was hitting 2GB limit with
-            // giant arrays needed for addresses in this part.
+            // Use Spare List for memory locations
             var memory = new List<Tuple<long, long>>();
 
             string currentMask = "";
 
             foreach (var line in lines)
             {
-                if (line.Substring(0, 3) == "mas")
+                // first three chars of line signify instruction type
+                string command = line.Substring(0, 3);
+
+                if (command == "mas")
                 {
                     // if instruction is a new mask, parse mask from line then set.
                     currentMask = line.Split('=')[1].TrimStart();
                 }
-                else if (line.Substring(0, 3) == "mem")
+                else if (command == "mem")
                 {
                     // parse out values
-                    int memLocation = int.Parse(line.Split('=')[0].TrimEnd().Replace("]", string.Empty).Substring(4));
-                    int memValue = int.Parse(line.Split('=')[1].TrimStart());
+                    int memLocation = ParseMemoryLocationFromLine(line);
+                    int memValue = ParseMemoryValueFromLine(line);
 
                     string binaryValue = ConvertToBinary(memLocation);
 
@@ -98,13 +102,15 @@ namespace AdventOfCode
                     }
 
                     string complete = output.ToString();
+
+                    // count X in result. This tells us how many wildcard address bits
+                    // there are. Squaring this value, gives us the number of mem
+                    // locastions we end up writing too.
                     int max = complete.Count(x => x == 'X');
                     max = max * max;
 
                     var locations = new List<String>();
                     locations.Add(complete);
-
-                    //we now have our floating memlocations
 
                     int count = 0;
 
@@ -138,14 +144,11 @@ namespace AdventOfCode
                     foreach (var location in locations)
                     {
                         long workingLocation = Convert.ToInt64(location, 2);
-                        //memory[Convert.ToInt64(location, 2)] = memValue;
-                        var memoryVariable = memory.Where(x => x.Item1 == workingLocation);
 
-                        if (memoryVariable.Count() != 0)
-                        {
-                            memory.Remove(memoryVariable.Single());
-                        }
+                        // if location is already set, then remove
+                        memory.RemoveAll(x => x.Item1 == workingLocation);
 
+                        // store val for location
                         memory.Add(new Tuple<long, long>(workingLocation, memValue));
                     }
                 }
@@ -165,6 +168,21 @@ namespace AdventOfCode
 
             // trim leading surplus then return
             return binaryValue.Substring(len);
+        }
+
+        private static int ParseMemoryLocationFromLine(string line)
+        {
+            return int.Parse(line.Split('=')[0].TrimEnd().Replace("]", string.Empty).Substring(4));
+        }
+
+        private static int ParseMemoryValueFromLine(string line)
+        {
+            return int.Parse(line.Split('=')[1].TrimStart());
+        }
+
+        private static string ParseMaskFromLine(string line)
+        {
+            return line.Split('=')[1].TrimStart();
         }
     }
 }
