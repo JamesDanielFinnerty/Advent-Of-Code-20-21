@@ -9,79 +9,39 @@ namespace AdventOfCode
     {
         public static int Part1(string input, long targetTurn)
         {
-            // split input string by commas then cast to ints inside a tuple array
-            // tuple item 1 is number, item 2 is age1, item 3 is age2
-            var data = Array.ConvertAll(
+            var numbers = Array.ConvertAll(
                                 input.Split(','),
-                                x => new Number(int.Parse(x), null, null)
-                             ).ToList();
+                                x => int.Parse(x)
+                             );
 
-            // we start on turn 1, no 0 indexing
-            int turn = 1;
-            Number lastNumberSpoken = null;
+            var turns = new int[30000000];
+            Array.Fill(turns, -1);
 
-            // handle special case for turns relating to initial numbers
-            for (int i = 0; i < data.Count; i++)
+            var turn = 1;
+
+            for (; turn < numbers.Length + 1; turn++)
             {
-                data[i].lastSpoken = turn;
-                lastNumberSpoken = data[i];
-                turn++;
+                turns[numbers[turn - 1]] = turn;
             }
 
-            for (int i = turn; i <= targetTurn; i++)
+            var currentNumber = 0;
+
+            for (; turn < targetTurn; turn++)
             {
-                int currentNumberValue = 0;
+                var previousTurn = turns[currentNumber];
+                turns[currentNumber] = turn;
 
-                if(lastNumberSpoken.spokenBeforeThat != null)
+                if(previousTurn != -1)
                 {
-                    currentNumberValue = lastNumberSpoken.GetGap();
+                    currentNumber = turn - previousTurn;
                 }
-
-                // get object for this number if it exists.
-                var currentNumber = data.Where(x => x.value == currentNumberValue).SingleOrDefault();
-
-                // if it doesn't exist then create it
-                if (currentNumber == null)
+                else
                 {
-                    currentNumber = new Number(currentNumberValue, null, null);
-                    data.Add(currentNumber);
-                }
-
-                currentNumber.spokenBeforeThat = currentNumber.lastSpoken;
-                currentNumber.lastSpoken = turn;
-
-                lastNumberSpoken = currentNumber;
-
-                turn++;
-                
-                if(turn == targetTurn+1)
-                {
-                    //var x = data.OrderBy(x => x.value).ToList();
-                    return currentNumberValue;
+                    currentNumber = 0;
                 }
             }
 
-            // this should not be reached
-            return -1;
-        }
-
-        private class Number
-        {
-            public int value = 0;
-            public int? lastSpoken = null;
-            public int? spokenBeforeThat = null;
-
-            public Number(int value, int? lastSpoken, int? spokenBeforeThat)
-            {
-                this.value = value;
-                this.lastSpoken = lastSpoken;
-                this.spokenBeforeThat = spokenBeforeThat;
-            }
-
-            public int GetGap()
-            {
-                return lastSpoken.GetValueOrDefault() - spokenBeforeThat.GetValueOrDefault();
-            }
+            return currentNumber;
         }
     }
 }
