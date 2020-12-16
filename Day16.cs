@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace AdventOfCode
@@ -84,18 +85,15 @@ namespace AdventOfCode
 
             int rulesCount = rules.Count;
 
-            var outputRules = new StringBuilder();
+            var outputRules = new List<int>();
 
             for (int columnNo = 0; columnNo < rulesCount; columnNo++)
             {
-                bool success = true;
-                Rule rule = null;
-                int validRules = 0;
+                var validRules = new List<Rule>();
 
                 foreach (var thisRule in rules)
                 {
-                    success = true;
-                    int x = 0;
+                    bool success = true;
 
                     foreach(var validTicket in validTickets)
                     {
@@ -107,32 +105,40 @@ namespace AdventOfCode
                         {
                             success = false;
                         }
-
-                        x++;
                     }
 
                     if (success)
                     {
-                        rule = thisRule;
-                        validRules++;
+                        validRules.Add(thisRule);
                     }
 
                 }
 
-                if (success)
-                {
-                    outputRules.Append(rule.name + ",");
+                if (validRules.Count == 1)
+                { 
+                    if(validRules.Single().name.StartsWith("depart"))
+                    {
+                        outputRules.Add(columnNo);
+                    }
+                    
+                    rules.Remove(validRules.Single());
+                    columnNo = -1;
                 }
             }
 
-            var end = outputRules.ToString();
+            // formatting
+            string myTicket = "109,199,223,179,97,227,197,151,73,79,211,181,71,139,53,149,137,191,83,193";
 
-            // 0,1,2,11,12,14
-            // 3 294 558 553 579 is wrong
+            var myNumbers = Array.ConvertAll(myTicket.Split(','), s => int.Parse(s)).ToList();
 
-            // 29 380 110 348 257 wrong
+            long result = 1;
 
-            return 0;
+            foreach(var rule in outputRules)
+            {
+                result = result * myNumbers[rule];
+            }
+
+            return result;
         }
 
         public class Rule
